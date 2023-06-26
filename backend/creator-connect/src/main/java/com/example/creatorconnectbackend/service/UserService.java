@@ -16,17 +16,18 @@ public class UserService {
 	@Autowired
 	private UserRepository userRepository;
 
-	// This can be any in-memory data structure.
-	// Here, we're using a concurrent map for simplicity
-	private final Map<String, String> otps = new ConcurrentHashMap<>();
+	public UserService(UserRepository userRepository) {
+		this.userRepository = userRepository;
+	}
 
 	public User login(String email, String password) {
-		User user = userRepository.findByEmail(email);
-		if(user != null && user.getPassword().equals(password)) {
-			return user;
-		}
-		return null;
-	}
+	        User user = userRepository.findByEmail(email);
+	        if(user != null && user.getPassword().equals(password)) {
+	            return user;
+	        }
+	        return null;
+	    }
+
 
 	public User signup(User user) {
 		if(userRepository.findByEmail(user.getEmail()) == null){

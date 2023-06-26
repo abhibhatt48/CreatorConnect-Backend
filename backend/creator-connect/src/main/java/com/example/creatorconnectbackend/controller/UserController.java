@@ -17,8 +17,12 @@ public class UserController {
 	
 	@Autowired
 	private UserService userService;
-	
-	
+
+	public UserController(UserService userService) {
+		this.userService = userService;
+	}
+
+
 	@PostMapping("/signup")
     public ResponseEntity<User> signUp(@RequestBody User user) {
         User newUser = userService.signup(user);
