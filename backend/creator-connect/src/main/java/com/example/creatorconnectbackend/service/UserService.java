@@ -12,8 +12,12 @@ public class UserService {
 	
 	@Autowired
 	private UserRepository userRepository;
-	
-	 public User login(String email, String password) {
+
+	public UserService(UserRepository userRepository) {
+		this.userRepository = userRepository;
+	}
+
+	public User login(String email, String password) {
 	        User user = userRepository.findByEmail(email);
 	        if(user != null && user.getPassword().equals(password)) {
 	            return user;
