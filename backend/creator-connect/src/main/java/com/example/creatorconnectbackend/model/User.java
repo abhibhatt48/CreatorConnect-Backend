@@ -1,6 +1,13 @@
 package com.example.creatorconnectbackend.model;
 
 import lombok.Data;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
+import org.hibernate.validator.constraints.Email;
+
 import jakarta.persistence.*;
 
 
@@ -9,19 +16,25 @@ import jakarta.persistence.*;
 @Table(name = "users")
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column (name= "UserID")
-    private Long userID;
+	 @Id
+	    @GeneratedValue(strategy = GenerationType.IDENTITY)
+	    @Column (name= "UserID")
+	    private Long userID;
 
-    @Column(unique = true, name = "Email")
-    private String email;
+	    @Email
+	    @NotNull
+	    @Pattern(regexp=".+@.+\\..+", message="Invalid email address")
+	    @Column(unique = true, name = "Email")
+	    private String email;
 
-    @Column( name = "Password")
-    private String password;
+	    @NotNull
+	    @Size(min=8) // If you want to enforce a minimum password length of 8
+	    @Column( name = "Password")
+	    private String password;
 
-    @Column (name = "user_type")
-    private String user_type;
+	    @NotNull
+	    @Column (name = "user_type")
+	    private String user_type;
 
 	public Long getUserID() {
 		return userID;

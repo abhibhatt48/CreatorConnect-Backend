@@ -2,6 +2,8 @@ package com.example.creatorconnectbackend.controller;
 
 import java.util.Map;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +26,11 @@ public class UserController {
 
 
 	@PostMapping("/signup")
-    public ResponseEntity<User> signUp(@RequestBody User user) {
-        User newUser = userService.signup(user);
-        return newUser != null ? 
-            ResponseEntity.ok(newUser) : ResponseEntity.unprocessableEntity().build();
-        
-    }
+	public ResponseEntity<User> signUp(@Valid @RequestBody User user) {
+	    User newUser = userService.signup(user);
+	    return newUser != null ? 
+	        ResponseEntity.ok(newUser) : ResponseEntity.unprocessableEntity().build();
+	}
 	
 	@PostMapping("/login")
 	public ResponseEntity<User> login(@RequestBody User user) {
@@ -70,3 +71,4 @@ public class UserController {
 	        ResponseEntity.ok(user) : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 	}
 }
+
