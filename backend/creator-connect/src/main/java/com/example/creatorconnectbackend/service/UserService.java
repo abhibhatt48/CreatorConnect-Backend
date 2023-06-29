@@ -3,7 +3,6 @@ package com.example.creatorconnectbackend.service;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.example.creatorconnectbackend.interfaces.UserServiceInterface;
 import com.example.creatorconnectbackend.model.OtpDetails;
 import com.example.creatorconnectbackend.model.User;
 import com.example.creatorconnectbackend.repository.UserRepository;
@@ -16,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.Map;
 
 @Service
-public class UserService implements UserServiceInterface {
+public class UserService  {
 	
 	@Autowired
 	private UserRepository userRepository;
