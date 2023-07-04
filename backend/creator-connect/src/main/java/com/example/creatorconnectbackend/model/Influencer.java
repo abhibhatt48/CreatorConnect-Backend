@@ -1,144 +1,87 @@
 package com.example.creatorconnectbackend.model;
 
-import jakarta.persistence.*;
-import lombok.Data;
-
-@Data
-@Entity
-@Table(name = "influencers")
 public class Influencer {
-
-    @Id
-    @Column(unique = true, name = "InfluencerID")
-    private Long influencerID;
-
-    @Column(name = "Name")
+	private Long influencerID;
     private String name;
-
-    @Column(name = "ProfileImage")
     private String profileImage;
-
-    @Column(name = "Gender")
-    private String gender;
-
-    @Column(name = "InfluencerName")
+    private Gender gender;
     private String influencerName;
-
-    @Column(name = "InfluencerType")
     private String influencerType;
-
-    @Column(name = "InterestedIn")
     private String interestedIn;
-
-    @Column(name = "MinRate")
     private Long minRate;
-
-    @Column(columnDefinition = "TEXT", name = "PreviousBrands")
     private String previousBrands;
-
-    @Column(name = "Location")
     private String location;
-
-    @Column(columnDefinition = "TEXT", name = "BestPosts")
     private String bestPosts;
-
-    @OneToOne
-    @JoinColumn(name = "InfluencerID", referencedColumnName = "UserID")
-    private User user;
-
 	public Long getInfluencerID() {
 		return influencerID;
 	}
-
 	public void setInfluencerID(Long influencerID) {
 		this.influencerID = influencerID;
 	}
-
 	public String getName() {
 		return name;
 	}
-
 	public void setName(String name) {
 		this.name = name;
 	}
-
 	public String getProfileImage() {
 		return profileImage;
 	}
-
 	public void setProfileImage(String profileImage) {
 		this.profileImage = profileImage;
 	}
-
-	public String getGender() {
+	public Gender getGender() {
 		return gender;
 	}
-
-	public void setGender(String gender) {
+	public void setGender(Gender gender) {
 		this.gender = gender;
 	}
-
 	public String getInfluencerName() {
 		return influencerName;
 	}
-
 	public void setInfluencerName(String influencerName) {
 		this.influencerName = influencerName;
 	}
-
 	public String getInfluencerType() {
 		return influencerType;
 	}
-
 	public void setInfluencerType(String influencerType) {
 		this.influencerType = influencerType;
 	}
-
 	public String getInterestedIn() {
 		return interestedIn;
 	}
-
 	public void setInterestedIn(String interestedIn) {
 		this.interestedIn = interestedIn;
 	}
-
 	public Long getMinRate() {
 		return minRate;
 	}
-
 	public void setMinRate(Long minRate) {
 		this.minRate = minRate;
 	}
-
 	public String getPreviousBrands() {
 		return previousBrands;
 	}
-
 	public void setPreviousBrands(String previousBrands) {
 		this.previousBrands = previousBrands;
 	}
-
 	public String getLocation() {
 		return location;
 	}
-
 	public void setLocation(String location) {
 		this.location = location;
 	}
-
 	public String getBestPosts() {
 		return bestPosts;
 	}
-
 	public void setBestPosts(String bestPosts) {
 		this.bestPosts = bestPosts;
 	}
+}
 
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
-	}
+enum Gender {
+    MALE,
+    FEMALE,
+    OTHER;
 }

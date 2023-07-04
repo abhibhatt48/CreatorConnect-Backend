@@ -1,74 +1,75 @@
 package com.example.creatorconnectbackend.controller;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.creatorconnectbackend.model.EmailBody;
 import com.example.creatorconnectbackend.model.User;
 import com.example.creatorconnectbackend.service.UserService;
 
 @RestController
+@RequestMapping("/api/users")
 public class UserController {
 	
-	@Autowired
-	private UserService userService;
+	private final UserService userService;
 
 	public UserController(UserService userService) {
-		this.userService = userService;
-	}
+        this.userService = userService;
+    }
 
 
-	@PostMapping("/signup")
-	public ResponseEntity<User> signUp(@Valid @RequestBody User user) {
-	    User newUser = userService.signup(user);
-	    return newUser != null ? 
-	        ResponseEntity.ok(newUser) : ResponseEntity.unprocessableEntity().build();
+	@PostMapping("/register")
+	public ResponseEntity<String> registerUser(@Valid @RequestBody User user, BindingResult bindingResult) {
+	    if(bindingResult.hasErrors()){
+	        // convert the list of ObjectError objects into a single string
+	        String errorMsg = bindingResult.getAllErrors().stream()
+	            .map(ObjectError::getDefaultMessage)
+	            .collect(Collectors.joining(", "));
+
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
+	    }
+	    User registeredUser = userService.register(user);
+	    return ResponseEntity.ok("Registered successfully");
 	}
 	
 	@PostMapping("/login")
-	public ResponseEntity<User> login(@RequestBody User user) {
-	    User loggedUser = userService.login(user.getEmail(), user.getPassword());
-	    return loggedUser != null ? 
-	        ResponseEntity.ok(loggedUser) : ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-	}
-	
-	@PostMapping("/forgotpassword")
-	public ResponseEntity<Void> forgotPassword(@RequestBody String email) {
-	    try {
-	        userService.forgotPassword(email);
-	        return ResponseEntity.ok().build();
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-	    }
-	}
-	
-	@PostMapping("/validateotp")
-	public ResponseEntity<Void> validateOtp(@RequestBody Map<String, String> request) {
-	    String email = request.get("email");
-	    String otp = request.get("otp");
-	    boolean isOtpValid = userService.validateOtp(email, otp);
-	    if (isOtpValid) {
-	        return ResponseEntity.ok().build();
-	    } else {
-	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-	    }
-	}
+	public ResponseEntity<String> loginUser(@Valid @RequestBody User user, BindingResult bindingResult) {
+	    if(bindingResult.hasErrors()){
+	        // convert the list of ObjectError objects into a single string
+	        String errorMsg = bindingResult.getAllErrors().stream()
+	            .map(ObjectError::getDefaultMessage)
+	            .collect(Collectors.joining(", "));
 
-	@PostMapping("/resetpassword")
-	public ResponseEntity<User> resetPassword(@RequestBody Map<String, String> request) {
-	    String email = request.get("email");
-	    String password = request.get("password");
-	    User user = userService.resetPassword(email, password);
-	    return user != null ? 
-	        ResponseEntity.ok(user) : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
+	    }
+	    boolean loggedIn = userService.login(user);
+	    return loggedIn ? ResponseEntity.ok("Logged in successfully") : ResponseEntity.badRequest().build();
+	}
+	
+	@PostMapping("/forgot-password")
+	public ResponseEntity<String> forgotPassword(@RequestBody EmailBody emailBody) {
+	    userService.forgotPassword(emailBody.getEmail());
+	    return ResponseEntity.ok("Email with reset password link has been sent");
+	}
+	
+	@PostMapping("/reset-password")
+	public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> request) {
+	    String token = request.get("token");
+	    String newPassword = request.get("password");
+	    userService.resetPassword(token, newPassword);
+	    return ResponseEntity.ok("Password has been reset");
 	}
 }
 

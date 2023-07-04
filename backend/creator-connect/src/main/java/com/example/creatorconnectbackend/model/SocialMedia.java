@@ -1,24 +1,32 @@
 package com.example.creatorconnectbackend.model;
 
-import javax.persistence.*;
-import lombok.Data;
-
-@Data
-@Entity
-@Table(name = "social_media")
 public class SocialMedia {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long SMID;
-
-    private Long UserID;
-
-    private String Platform;
-
-    private String Link;
-
-    @ManyToOne
-    @JoinColumn(name = "UserID", referencedColumnName = "UserID", insertable = false, updatable = false)
-    private User user;
+	private Long smID;
+    private Long userID;
+    private String platform;
+    private String link;
+	public Long getSmID() {
+		return smID;
+	}
+	public void setSmID(Long smID) {
+		this.smID = smID;
+	}
+	public Long getUserID() {
+		return userID;
+	}
+	public void setUserID(Long userID) {
+		this.userID = userID;
+	}
+	public String getPlatform() {
+		return platform;
+	}
+	public void setPlatform(String platform) {
+		this.platform = platform;
+	}
+	public String getLink() {
+		return link;
+	}
+	public void setLink(String link) {
+		this.link = link;
+	}
 }

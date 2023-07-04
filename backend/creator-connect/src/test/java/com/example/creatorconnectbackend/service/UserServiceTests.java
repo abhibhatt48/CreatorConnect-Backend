@@ -1,77 +1,104 @@
 package com.example.creatorconnectbackend.service;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import com.example.creatorconnectbackend.model.User;
-import com.example.creatorconnectbackend.repository.UserRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-@Service
 public class UserServiceTests {
 
     private UserService userService;
-    private UserRepository userRepository;
+
+    @Mock
+    private JdbcTemplate jdbcTemplate;
+
+    @Mock
+    private EmailService emailService;
 
     @BeforeEach
     public void setUp() {
-        userRepository = mock(UserRepository.class);
-        userService = new UserService(userRepository);
+        MockitoAnnotations.openMocks(this);
+        userService = new UserService(jdbcTemplate, emailService);
     }
 
     @Test
-    public void testLoginValidCredentials() {
-        // Create Mock User
-        User mockUser = new User();
-        mockUser.setEmail("group2@gmail.com");
-        mockUser.setPassword("group2");
-        when(userRepository.findByEmail("group2@gmail.com")).thenReturn(mockUser);
+    public void testRegisterUser() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword("password");
+        user.setUser_type("user");
 
-        // Run the method
-        User result = userService.login("group2@gmail.com", "group2");
-        assertEquals(mockUser, result);
+        userService.register(user);
+
+        verify(jdbcTemplate).update(any(String.class), any(String.class), any(String.class), any(String.class));
     }
 
     @Test
-    public void testLoginInvalidCredentials() {
-        // Create Mock User
-        when(userRepository.findByEmail("group2@gmail.com")).thenReturn(null);
-        User result = userService.login("group2@gmail.com", "group2");
+    public void testLoginUserValid() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword("password");
 
-        assertNull(result);
+        List<User> users = new ArrayList<>();
+        users.add(user);
+
+        when(jdbcTemplate.query(any(String.class), any(RowMapper.class), any(String.class), any(String.class)))
+                .thenReturn(users);
+
+        boolean loggedIn = userService.login(user);
+
+        assertTrue(loggedIn);
     }
 
     @Test
-    public void testSignupNewUser() {
-        // Create Mock User
-        User newUser = new User();
-        newUser.setEmail("group2@gmail.com");
-        newUser.setPassword("group2");
-        when(userRepository.findByEmail("group2@gmail.com")).thenReturn(null);
-        when(userRepository.save(any(User.class))).thenReturn(newUser);
+    public void testLoginUserInvalid() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword("password");
 
-        User result = userService.signup(newUser);
+        when(jdbcTemplate.query(any(String.class), any(RowMapper.class), any(String.class), any(String.class)))
+                .thenReturn(new ArrayList<>());
 
-        assertEquals(newUser, result);
+        boolean loggedIn = userService.login(user);
+
+        assertFalse(loggedIn);
     }
 
     @Test
-    public void testSignupExistingUser() {
-        // Create Mock User
-        User existingUser = new User();
-        existingUser.setEmail("group2@gmail.com");
-        existingUser.setPassword("group2");
-        when(userRepository.findByEmail("group2@gmail.com")).thenReturn(existingUser);
+    public void testForgotPassword() {
+        String email = "test@example.com";
 
-        User result = userService.signup(existingUser);
+        userService.forgotPassword(email);
 
-        assertNull(result);
+        verify(jdbcTemplate).update(any(String.class), any(String.class), any(String.class));
+        verify(emailService).sendEmail(any(String.class), any(String.class), any(String.class));
+    }
+
+    @Test
+    public void testResetPassword() {
+        String token = UUID.randomUUID().toString();
+        String newPassword = "newPassword";
+
+        userService.resetPassword(token, newPassword);
+
+        verify(jdbcTemplate).update(any(String.class), any(String.class), any(String.class));
     }
 }
-

@@ -2,102 +2,67 @@ package com.example.creatorconnectbackend.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
-import com.example.creatorconnectbackend.model.OtpDetails;
+import com.example.creatorconnectbackend.Interfaces.UserServiceInterface;
 import com.example.creatorconnectbackend.model.User;
-import com.example.creatorconnectbackend.repository.UserRepository;
-
 import jakarta.mail.MessagingException;
 
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.security.SecureRandom;
+import java.util.List;
 import java.util.Map;
 
 @Service
-public class UserService  {
-	
-	@Autowired
-	private UserRepository userRepository;
-	
-	@Autowired
-    private EmailService emailService;
-	
-	private Map<String, OtpDetails> otps = new ConcurrentHashMap<>();
+public class UserService implements UserServiceInterface {
+    
+    private final JdbcTemplate jdbcTemplate;
+    private final EmailService emailService;
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final int OTP_LENGTH = 6;
 
+    public UserService(JdbcTemplate jdbcTemplate, EmailService emailService) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.emailService = emailService;
+    }
 
-	public UserService(UserRepository userRepository) {
-		this.userRepository = userRepository;
-	}
+    private RowMapper<User> rowMapper = (rs, rowNum) -> {
+        User user = new User();
+        user.setUserID(rs.getLong("userID"));
+        user.setEmail(rs.getString("email"));
+        user.setPassword(rs.getString("password"));
+        user.setUser_type(rs.getString("user_type"));
+        return user;
+    };
 
-	public User login(String email, String password) {
-	        User user = userRepository.findByEmail(email);
-	        if(user != null && user.getPassword().equals(password)) {
-	            return user;
-	        }
-	        return null;
-	    }
+    public User register(User user) {
+        String sql = "INSERT INTO users (email, password, user_type) VALUES (?, ?, ?)";
+        jdbcTemplate.update(sql, user.getEmail(), user.getPassword(), user.getUser_type());
+        return user;
+    }
 
+    public boolean login(User user) {
+        String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+        List<User> users = jdbcTemplate.query(sql, rowMapper, user.getEmail(), user.getPassword());
+        return !users.isEmpty();
+    }
 
-	public User signup(User user) {
-		if(userRepository.findByEmail(user.getEmail()) == null){
-			return userRepository.save(user);
-		}
-		return null;
-	}
+    public void forgotPassword(String email) {
+        String token = UUID.randomUUID().toString();
+        String sql = "UPDATE users SET reset_token = ? WHERE email = ?";
+        jdbcTemplate.update(sql, token, email);
 
-	public void forgotPassword(String email) {
-	    User user = userRepository.findByEmail(email);
-	    if (user == null) {
-	        // throw an exception
-	        throw new RuntimeException("User not found with email: " + email);
-	    }
-	    String otp = generateOtp();
-	    OtpDetails otpDetails = new OtpDetails(otp, System.currentTimeMillis());
-	    otps.put(email, otpDetails);
-	    sendOtpEmail(user, otpDetails);
-	    // log the OTP for testing/debugging
-	    System.out.println(otp);
-	}
+        // Send email with the reset password link.
+        String resetPasswordLink = "http://localhost:8080//api/users/reset-password?token=" + token; 
+        emailService.sendEmail(email, "Reset Password", "To reset your password, click the following link: " + resetPasswordLink);
+    }
 
-	public boolean validateOtp(String email, String otp) {
-	    OtpDetails otpDetails = otps.get(email);
-	    if (otpDetails != null && otpDetails.getOtp().equals(otp)) {
-	        long currentTimestamp = System.currentTimeMillis();
-	        long otpTimestamp = otpDetails.getTimestamp();
-	        long differenceInMinutes = TimeUnit.MILLISECONDS.toMinutes(currentTimestamp - otpTimestamp);
-
-	        if (differenceInMinutes <= 2) { // if the OTP is within the 2-minute window
-	            otps.remove(email);
-	            return true;
-	        }
-	    }
-	    return false;
-	}
-
-	public User resetPassword(String email, String password) {
-		User user = userRepository.findByEmail(email);
-		if (user == null) {
-			// throw an exception
-			throw new RuntimeException("User not found with email: " + email);
-		}
-		user.setPassword(password);
-		userRepository.save(user);
-		return user;
-	}
-
-	private String generateOtp() {
-		// Generate a 5 digit OTP
-		return String.format("%05d", new Random().nextInt(99999));
-	}
-
-	private void sendOtpEmail(User user, OtpDetails otpDetails) {
-	    String subject = "Your OTP";
-	    String text = "Your OTP is: " + otpDetails.getOtp();
-	    try {
-	        emailService.sendOtpMessage(user.getEmail(), subject, text);
-	    } catch (MessagingException e) {
-	        throw new RuntimeException(e);
-	    }
-	}
+    public void resetPassword(String token, String newPassword) {
+        String sql = "UPDATE users SET password = ? WHERE reset_token = ?";
+        jdbcTemplate.update(sql, newPassword, token);
+    }
 }
