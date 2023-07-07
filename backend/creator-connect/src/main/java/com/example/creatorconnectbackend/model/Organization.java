@@ -1,7 +1,15 @@
 package com.example.creatorconnectbackend.model;
 
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
 public class Organization {
+	
+	@Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long orgID;
+	private Long userId; 
     private String orgName;
     private String profileImage;
     private String companyType;
@@ -9,6 +17,7 @@ public class Organization {
     private String websiteLink;
     private String targetInfluencerType;
     private String location;
+    
 	public Long getOrgID() {
 		return orgID;
 	}
@@ -57,4 +66,11 @@ public class Organization {
 	public void setLocation(String location) {
 		this.location = location;
 	}
+	public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 }

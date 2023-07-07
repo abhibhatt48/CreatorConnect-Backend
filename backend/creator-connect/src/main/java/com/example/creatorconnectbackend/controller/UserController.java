@@ -40,6 +40,8 @@ public class UserController {
 
 	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
 	    }
+	    user.setUser_type(user.getUser_type());
+	    
 	    User registeredUser = userService.register(user);
 	    return ResponseEntity.ok("Registered successfully");
 	}

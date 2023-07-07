@@ -1,5 +1,8 @@
 package com.example.creatorconnectbackend.model;
 
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+
 public class Influencer {
 	private Long influencerID;
     private String name;
@@ -12,6 +15,11 @@ public class Influencer {
     private String previousBrands;
     private String location;
     private String bestPosts;
+    
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+    
 	public Long getInfluencerID() {
 		return influencerID;
 	}
@@ -80,8 +88,3 @@ public class Influencer {
 	}
 }
 
-enum Gender {
-    MALE,
-    FEMALE,
-    OTHER;
-}

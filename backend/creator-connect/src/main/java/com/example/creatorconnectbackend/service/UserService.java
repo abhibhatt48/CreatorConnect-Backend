@@ -2,6 +2,7 @@ package com.example.creatorconnectbackend.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -25,6 +26,8 @@ public class UserService implements UserServiceInterface {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int OTP_LENGTH = 6;
 
+    @Autowired
+    @Lazy
     public UserService(JdbcTemplate jdbcTemplate, EmailService emailService) {
         this.jdbcTemplate = jdbcTemplate;
         this.emailService = emailService;
