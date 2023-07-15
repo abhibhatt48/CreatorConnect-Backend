@@ -27,10 +27,10 @@ public class InfluencerController {
         this.influencerService = influencerService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<Influencer> registerInfluencer(@RequestBody Influencer influencer) {
-        Influencer registeredInfluencer = influencerService.register(influencer);
-        return new ResponseEntity<>(registeredInfluencer, HttpStatus.CREATED);
+    @PostMapping("/register/{userId}")
+    public ResponseEntity<Influencer> registerInfluencer(@PathVariable Long userId, @RequestBody Influencer influencer) {
+        Influencer registeredInfluencer = influencerService.register(influencer, userId);
+        return new ResponseEntity<>(registeredInfluencer, HttpStatus.CREATED);       
     }
 
     @GetMapping("/{id}")

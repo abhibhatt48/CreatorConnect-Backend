@@ -32,9 +32,11 @@ public class OrganizationControllerTests {
     @Test
     public void testRegisterOrganization() {
         Organization organization = new Organization();
-        when(organizationService.register(organization)).thenReturn(organization);
+        Long userId = 12345L;
 
-        ResponseEntity<Organization> response = organizationController.registerOrganization(organization);
+        when(organizationService.register(organization, userId)).thenReturn(organization);
+
+        ResponseEntity<Organization> response = organizationController.registerOrganization(userId, organization);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(organization, response.getBody());

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -13,10 +14,15 @@ import org.springframework.stereotype.Service;
 
 import com.example.creatorconnectbackend.Interfaces.OrganizationServiceInterface;
 import com.example.creatorconnectbackend.model.Organization;
+import com.example.creatorconnectbackend.model.User;
 
 @Service
 public class OrganizationService implements OrganizationServiceInterface {
     private final JdbcTemplate jdbcTemplate;
+    
+    @Autowired
+    private UserService userService;
+
 
     public OrganizationService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -35,24 +41,30 @@ public class OrganizationService implements OrganizationServiceInterface {
         return organization;
     };
 
-    public Organization register(Organization organization) {
-        SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("organizations")
-                .usingGeneratedKeyColumns("orgID");
-
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("userId", organization.getUserId()); 
-        parameters.put("orgName", organization.getOrgName());
-        parameters.put("profileImage", organization.getProfileImage());
-        parameters.put("companyType", organization.getCompanyType());
-        parameters.put("size", organization.getSize());
-        parameters.put("websiteLink", organization.getWebsiteLink());
-        parameters.put("targetInfluencerType", organization.getTargetInfluencerType());
-        parameters.put("location", organization.getLocation());
-
-        Number generatedId = jdbcInsert.executeAndReturnKey(parameters);
-        organization.setOrgID(generatedId.longValue());
-        return organization;
+    public Organization register(Organization organization, Long userId) {
+    	// Fetch the user using the provided userId
+        User user = jdbcTemplate.queryForObject("SELECT * FROM users WHERE UserID = ?", new Object[]{userId}, userService.getUserRowMapper());
+        
+        if (user != null && user.getUser_type().equals("Organization")) {
+        	SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
+        	jdbcInsert.withTableName("organizations");
+        	
+        	Map<String, Object> parameters = new HashMap<String, Object>();
+        	parameters.put("orgID", userId); 
+            parameters.put("orgName", organization.getOrgName());
+            parameters.put("profileImage", organization.getProfileImage());
+            parameters.put("companyType", organization.getCompanyType());
+            parameters.put("size", organization.getSize());
+            parameters.put("websiteLink", organization.getWebsiteLink());
+            parameters.put("targetInfluencerType", organization.getTargetInfluencerType());
+            parameters.put("location", organization.getLocation());
+            
+            jdbcInsert.execute(parameters);
+            
+            return organization;
+        } else {
+        	return null;
+        }
     }
 
     

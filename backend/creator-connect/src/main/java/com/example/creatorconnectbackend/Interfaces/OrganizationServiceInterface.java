@@ -5,7 +5,7 @@ import java.util.List;
 import com.example.creatorconnectbackend.model.Organization;
 
 public interface OrganizationServiceInterface {
-	Organization register(Organization organization);
+	Organization register(Organization organization, Long userId);
     Organization getById(Long id);
     Organization update(Long id, Organization updatedOrganization);
     List<Organization> getAll();

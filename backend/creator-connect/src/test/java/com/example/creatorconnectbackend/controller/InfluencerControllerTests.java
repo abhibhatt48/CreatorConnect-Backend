@@ -32,9 +32,11 @@ public class InfluencerControllerTests {
     @Test
     public void testRegisterInfluencer() {
         Influencer influencer = new Influencer();
-        when(influencerService.register(influencer)).thenReturn(influencer);
+        Long userId = 12345L;
+        
+        when(influencerService.register(influencer, userId)).thenReturn(influencer);
 
-        ResponseEntity<Influencer> response = influencerController.registerInfluencer(influencer);
+        ResponseEntity<Influencer> response = influencerController.registerInfluencer(userId, influencer);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(influencer, response.getBody());

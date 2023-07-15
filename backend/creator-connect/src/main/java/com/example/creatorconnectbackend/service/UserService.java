@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 
 import com.example.creatorconnectbackend.Interfaces.UserServiceInterface;
 import com.example.creatorconnectbackend.model.User;
@@ -15,6 +17,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.security.SecureRandom;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 
@@ -41,10 +45,25 @@ public class UserService implements UserServiceInterface {
         user.setUser_type(rs.getString("user_type"));
         return user;
     };
+    
+    public RowMapper<User> getUserRowMapper() {
+        return rowMapper;
+    }
 
     public User register(User user) {
         String sql = "INSERT INTO users (email, password, user_type) VALUES (?, ?, ?)";
-        jdbcTemplate.update(sql, user.getEmail(), user.getPassword(), user.getUser_type());
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, user.getEmail());
+            ps.setString(2, user.getPassword());
+            ps.setString(3, user.getUser_type());
+            return ps;
+        }, keyHolder);
+
+        Long userId = keyHolder.getKey().longValue();
+        user.setUserID(userId);
         return user;
     }
 

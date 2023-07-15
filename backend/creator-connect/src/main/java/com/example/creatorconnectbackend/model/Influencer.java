@@ -15,9 +15,7 @@ public class Influencer {
     private String previousBrands;
     private String location;
     private String bestPosts;
-    
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+ 
     private User user;
     
 	public Long getInfluencerID() {
@@ -86,5 +84,10 @@ public class Influencer {
 	public void setBestPosts(String bestPosts) {
 		this.bestPosts = bestPosts;
 	}
+	public User getUser() {
+		return user;
+	}
+	public void setUser(User user) {
+		this.user = user;
+	}
 }
-

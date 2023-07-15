@@ -27,9 +27,9 @@ public class OrganizationController {
         this.organizationService = organizationService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<Organization> registerOrganization(@RequestBody Organization organization) {
-        Organization registeredOrganization = organizationService.register(organization);
+    @PostMapping("/register/{userId}")
+    public ResponseEntity<Organization> registerOrganization(@PathVariable Long userId,@RequestBody Organization organization) {
+        Organization registeredOrganization = organizationService.register(organization, userId);
         return new ResponseEntity<>(registeredOrganization, HttpStatus.CREATED);
     }
 

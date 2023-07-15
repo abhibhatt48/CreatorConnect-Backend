@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -19,7 +20,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 @Service
 public class InfluencerService implements InfluencerServiceInterface {
     private final JdbcTemplate jdbcTemplate;
-    private final UserService userService;
+   
+    @Autowired
+    private UserService userService;
 
     public InfluencerService(JdbcTemplate jdbcTemplate, UserService userService ) {
         this.jdbcTemplate = jdbcTemplate;
@@ -42,27 +45,37 @@ public class InfluencerService implements InfluencerServiceInterface {
         return influencer;
     };
 
-    public Influencer register(Influencer influencer) {
-        SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("influencers")
-                .usingGeneratedKeyColumns("influencerID");
+    public Influencer register(Influencer influencer, Long userId) {
+        // Fetch the user using the provided userId
+        User user = jdbcTemplate.queryForObject("SELECT * FROM users WHERE UserID = ?", new Object[]{userId}, userService.getUserRowMapper());
 
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("name", influencer.getName());
-        parameters.put("profileImage", influencer.getProfileImage());
-        parameters.put("gender", influencer.getGender().name());
-        parameters.put("influencerName", influencer.getInfluencerName());
-        parameters.put("influencerType", influencer.getInfluencerType());
-        parameters.put("interestedIn", influencer.getInterestedIn());
-        parameters.put("minRate", influencer.getMinRate());
-        parameters.put("previousBrands", influencer.getPreviousBrands());
-        parameters.put("location", influencer.getLocation());
-        parameters.put("bestPosts", influencer.getBestPosts());
+        // Only proceed if the user type is 'Influencer'
+        if (user != null && user.getUser_type().equals("Influencer")) {
+        	System.out.println();
+            SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
+            jdbcInsert.withTableName("influencers");
 
-        Number generatedId = jdbcInsert.executeAndReturnKey(parameters);
-        influencer.setInfluencerID(generatedId.longValue());
-        return influencer;
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("InfluencerID", userId);
+            parameters.put("Name", influencer.getName());
+            parameters.put("ProfileImage", influencer.getProfileImage());
+            parameters.put("gender", influencer.getGender());
+            parameters.put("InfluencerName", influencer.getInfluencerName());
+            parameters.put("InfluencerType", influencer.getInfluencerType());
+            parameters.put("InterestedIn", influencer.getInterestedIn());
+            parameters.put("MinRate", influencer.getMinRate());
+            parameters.put("PreviousBrands", influencer.getPreviousBrands());
+            parameters.put("Location", influencer.getLocation());
+            parameters.put("BestPosts", influencer.getBestPosts());
+
+            jdbcInsert.execute(parameters);
+
+            return influencer;
+        } else {
+            return null;
+        }
     }
+
 
     public Influencer getById(Long id) {
         String sql = "SELECT * FROM influencers WHERE influencerID = ?";
