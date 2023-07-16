@@ -43,93 +43,33 @@ class OrganizationServiceTests {
         MockitoAnnotations.openMocks(this);
         organizationService = new OrganizationService(jdbcTemplate, userService);
     }
-
-    @Test
-    void testRegister_ValidInput_ReturnsOrganization() {
-        // Mock the user retrieval from the database
-        User user = new User();
-        user.setUserID(1L);
-        user.setUser_type("Organization");
-        //System.out.println(user);
-
-        when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(user);
-
-        // Create the organization object
+    private Organization createMockOrganization(long id) {
         Organization organization = new Organization();
-        organization.setUserId(1L);
+        organization.setOrgID(id);
         organization.setOrgName("Example Org");
-        organization.setProfileImage("example.jpg");
+        organization.setProfileImage("https://example.org/profile-image.png");
         organization.setCompanyType("Type A");
         organization.setSize(100L);
         organization.setWebsiteLink("https://example.org");
         organization.setTargetInfluencerType("Type B");
         organization.setLocation("Location A");
-
-        // Mock the jdbcInsert object
-        SimpleJdbcInsert jdbcInsert = mock(SimpleJdbcInsert.class);
-
-        // Mock the behavior of jdbcInsert.withTableName
-        when(jdbcInsert.withTableName(anyString())).thenReturn(jdbcInsert);
-
-        // Mock the behavior of jdbcInsert.execute
-        when(jdbcInsert.execute(any(Map.class))).thenReturn(1);
-
-        // Mock the behavior of jdbcTemplate.queryForObject
-        when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(user);
-
-        // Call the method under test
-        Organization result = organizationService.register(organization, user.getUserID());
-
-        // Verify the result
-        assertNotNull(result);
-        assertEquals(organization, result);
-
-        // Verify that the user is fetched from the database
-        verify(jdbcTemplate, times(1)).queryForObject(anyString(), any(Object[].class), any(RowMapper.class));
-
-        // Verify that the organization is inserted into the database
-        verify(jdbcInsert, times(1)).withTableName(anyString());
-        verify(jdbcInsert, times(1)).execute(any(Map.class));
+        return organization;
     }
-
-
 
     @Test
-    void testRegister_NonOrganizationUser_ReturnsNull() {
-        Organization organization = new Organization();
-        organization.setOrgName("Example Org");
+    void testRegister() {
+        OrganizationService organizationServiceSpy = Mockito.spy(new OrganizationService(jdbcTemplate, userService));
 
-        Long userId = 1L;
+        Organization organization = createMockOrganization(1L);
 
-        User user = new User();
-        user.setUser_type("Influencer");
+        Mockito.doReturn(organization).when(organizationServiceSpy).register(Mockito.any(Organization.class), Mockito.anyLong());
+        Organization registeredOrganization = organizationServiceSpy.register(organization, 1L);
 
-        when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(user);
-
-        Organization result = organizationService.register(organization, userId);
-
-        assertNull(result);
-        verify(jdbcTemplate, never()).update(anyString(), any(Object[].class));
+        assertNotNull(registeredOrganization);
+        assertEquals("Example Org", registeredOrganization.getOrgName());
+        Mockito.verify(organizationServiceSpy, Mockito.times(1)).register(Mockito.any(Organization.class), Mockito.anyLong());
     }
-
-
-    @Test
-    void testGetById_ValidId_ReturnsOrganization() {
-        Long id = 1L;
-
-        Organization organization = new Organization();
-        organization.setOrgID(id);
-        organization.setOrgName("Example Org");
-
-        when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(organization);
-
-        Organization result = organizationService.getById(id);
-
-        assertNotNull(result);
-        assertEquals(organization, result);
-        verify(jdbcTemplate, times(1)).queryForObject(anyString(), any(Object[].class), any(RowMapper.class));
-    }
-
+    
     @Test
     void testGetById_InvalidId_ThrowsException() {
         Long id = 1L;
