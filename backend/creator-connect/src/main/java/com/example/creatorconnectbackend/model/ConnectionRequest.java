@@ -39,8 +39,3 @@ public class ConnectionRequest {
 	}    
 }
 
-enum RequestStatus {
-    Pending,
-    Accepted,
-    Denied
-}

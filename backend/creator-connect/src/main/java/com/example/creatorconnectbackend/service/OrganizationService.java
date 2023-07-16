@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Service;
 
@@ -23,9 +22,9 @@ public class OrganizationService implements OrganizationServiceInterface {
     @Autowired
     private UserService userService;
 
-
-    public OrganizationService(JdbcTemplate jdbcTemplate) {
+    public OrganizationService(JdbcTemplate jdbcTemplate, UserService userService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.userService = userService;
     }
 
     private RowMapper<Organization> rowMapper = (rs, rowNum) -> {
@@ -44,9 +43,10 @@ public class OrganizationService implements OrganizationServiceInterface {
     public Organization register(Organization organization, Long userId) {
     	// Fetch the user using the provided userId
         User user = jdbcTemplate.queryForObject("SELECT * FROM users WHERE UserID = ?", new Object[]{userId}, userService.getUserRowMapper());
-        
+
         if (user != null && user.getUser_type().equals("Organization")) {
-        	SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
+
+            SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
         	jdbcInsert.withTableName("organizations");
         	
         	Map<String, Object> parameters = new HashMap<String, Object>();
@@ -58,7 +58,7 @@ public class OrganizationService implements OrganizationServiceInterface {
             parameters.put("websiteLink", organization.getWebsiteLink());
             parameters.put("targetInfluencerType", organization.getTargetInfluencerType());
             parameters.put("location", organization.getLocation());
-            
+
             jdbcInsert.execute(parameters);
             
             return organization;

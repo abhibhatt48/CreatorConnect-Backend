@@ -20,7 +20,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 @Service
 public class InfluencerService implements InfluencerServiceInterface {
     private final JdbcTemplate jdbcTemplate;
-   
+
     @Autowired
     private UserService userService;
 
@@ -51,7 +51,7 @@ public class InfluencerService implements InfluencerServiceInterface {
 
         // Only proceed if the user type is 'Influencer'
         if (user != null && user.getUser_type().equals("Influencer")) {
-        	System.out.println();
+
             SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
             jdbcInsert.withTableName("influencers");
 
