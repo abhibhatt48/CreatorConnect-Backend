@@ -34,6 +34,10 @@ public class ConnectionRequestService implements ConnectionRequestServiceInterfa
         return connectionRequest;
     };
 
+    public RowMapper<ConnectionRequest> getRowMapper() {
+        return rowMapper;
+    }
+
     public ConnectionRequest createRequest(ConnectionRequest connectionRequest) {
         if (connectionRequest != null) {
             SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
@@ -46,8 +50,7 @@ public class ConnectionRequestService implements ConnectionRequestServiceInterfa
             params.put("RequestStatus", connectionRequest.getRequestStatus().name());
 
             Number generatedId = jdbcInsert.executeAndReturnKey(new MapSqlParameterSource(params));
-            Long requestId = generatedId.longValue();
-            connectionRequest.setRequestID(requestId);
+            connectionRequest.setRequestID(generatedId.longValue());
 
             return connectionRequest;
         } else {

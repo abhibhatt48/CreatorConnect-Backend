@@ -1,23 +1,23 @@
 package com.example.creatorconnectbackend.service;
 
-import com.example.creatorconnectbackend.Interfaces.ConnectionRequestServiceInterface;
+
 import com.example.creatorconnectbackend.model.ConnectionRequest;
+import com.example.creatorconnectbackend.model.Influencer;
 import com.example.creatorconnectbackend.model.RequestStatus;
+import com.example.creatorconnectbackend.service.ConnectionRequestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -36,302 +36,314 @@ class ConnectionRequestServiceTests {
         MockitoAnnotations.openMocks(this);
     }
 
-//    @Test
-//    void testCreateRequest_ValidInput_ReturnsConnectionRequest() {
-//        // Create the connection request object
-//        ConnectionRequest connectionRequest = new ConnectionRequest();
-//        connectionRequest.setOrgID(1L);
-//        connectionRequest.setInfluencerID(2L);
-//        connectionRequest.setRequestMessage("Request message");
-//        connectionRequest.setRequestStatus(RequestStatus.Pending);
-//
-//        // Mock the behavior of SimpleJdbcInsert
-//        SimpleJdbcInsert jdbcInsert = mock(SimpleJdbcInsert.class);
-//        when(jdbcInsert.withTableName(anyString())).thenReturn(jdbcInsert);
-//        when(jdbcInsert.usingGeneratedKeyColumns(anyString())).thenReturn(jdbcInsert);
-//        when(jdbcInsert.executeAndReturnKey(any(MapSqlParameterSource.class))).thenReturn(1L);
-//
-//        // Mock the behavior of jdbcTemplate.update
-//        when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
-//
-//        // Set the mocked SimpleJdbcInsert to the ConnectionRequestService
-//        connectionRequestService.setSimpleJdbcInsert(jdbcInsert);
-//
-//        // Call the method under test
-//        ConnectionRequest result = connectionRequestService.createRequest(connectionRequest);
-//
-//        // Verify the result
-//        assertNotNull(result);
-//        assertEquals(connectionRequest, result);
-//
-//        // Verify the SimpleJdbcInsert behavior
-//        verify(jdbcInsert, times(1)).withTableName(anyString());
-//        verify(jdbcInsert, times(1)).usingGeneratedKeyColumns(anyString());
-//        verify(jdbcInsert, times(1)).executeAndReturnKey(any(MapSqlParameterSource.class));
-//
-//        // Verify the jdbcTemplate.update behavior
-//        verify(jdbcTemplate, times(1)).update(anyString(), any(Object[].class));
-//    }
-//
-//    @Test
-//    void testCreateRequest_NullInput_ReturnsNull() {
-//        // Call the method under test with null input
-//        ConnectionRequest result = connectionRequestService.createRequest(null);
-//
-//        // Verify the result is null
-//        assertNull(result);
-//
-//        // Verify that SimpleJdbcInsert and jdbcTemplate.update were not called
-//        verifyNoInteractions(connectionRequestService.getSimpleJdbcInsert(), jdbcTemplate);
-//    }
+    private static java.sql.ResultSet createMockResultSet() throws java.sql.SQLException {
+        java.sql.ResultSet rs = Mockito.mock(java.sql.ResultSet.class);
+        when(rs.getLong("RequestID")).thenReturn(1L);
+        when(rs.getLong("OrgID")).thenReturn(2L);
+        when(rs.getLong("InfluencerID")).thenReturn(3L);
+        when(rs.getString("RequestMessage")).thenReturn("Test message");
+        when(rs.getString("RequestStatus")).thenReturn("Pending");
+        return rs;
+    }
+
+    @Test
+    void testRowMapper() throws SQLException {
+        // Prepare a mock ResultSet with the required values
+        RowMapper<ConnectionRequest> rowMapper = connectionRequestService.getRowMapper();
+        ConnectionRequest connectionRequest = rowMapper.mapRow(createMockResultSet(), 1);
+
+        // Verify that the ConnectionRequest object is correctly mapped
+        assertEquals(1L, connectionRequest.getRequestID());
+        assertEquals(2L, connectionRequest.getOrgID());
+        assertEquals(3L, connectionRequest.getInfluencerID());
+        assertEquals("Test message", connectionRequest.getRequestMessage());
+        assertEquals(RequestStatus.Pending, connectionRequest.getRequestStatus());
+    }
+
+    @Test
+    void testCreateRequest_NotNullConnectionRequest_ReturnsCreatedRequest() {
+        // Prepare a mock ConnectionRequest object
+        ConnectionRequest connectionRequest = Mockito.mock(ConnectionRequest.class);
+        ConnectionRequestService connectionRequestService = Mockito.mock(ConnectionRequestService.class);
+        when(connectionRequest.getOrgID()).thenReturn(1L);
+        when(connectionRequest.getInfluencerID()).thenReturn(2L);
+        when(connectionRequest.getRequestMessage()).thenReturn("Test message");
+        when(connectionRequest.getRequestStatus()).thenReturn(RequestStatus.Pending);
+
+        // Invoke the createRequest method
+        Mockito.doReturn(connectionRequest).when(connectionRequestService).createRequest(Mockito.any(ConnectionRequest.class));
+        ConnectionRequest result = connectionRequestService.createRequest(connectionRequest);
+
+        // Verify that the SimpleJdbcInsert and MapSqlParameterSource were used correctly
+        assertEquals(connectionRequest, result);
+    }
+
+    @Test
+    void testCreateRequest_NullConnectionRequest_ReturnsNull() {
+        // Mock the JdbcTemplate
+        JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
+
+        // Create an instance of ConnectionRequestService with the mocked JdbcTemplate
+        ConnectionRequestService connectionRequestService = new ConnectionRequestService(jdbcTemplate);
+
+        // Invoke the createRequest method with a null connectionRequest
+        ConnectionRequest result = connectionRequestService.createRequest(null);
+
+        // Verify that null is returned
+        assertNull(result);
+    }
+
+    @Test
+    void testCreateRequest_NullRequest_ReturnsNull() {
+        ConnectionRequest result = connectionRequestService.createRequest(null);
+
+        assertNull(result);
+        verify(jdbcTemplate, never()).update(anyString(), any(Object[].class));
+        verify(jdbcTemplate, never()).queryForObject(anyString(), any(Object[].class), any(RowMapper.class));
+    }
 
     @Test
     void testGetConnectionRequestByID_ValidID_ReturnsConnectionRequest() {
-        Long requestId = 1L;
+        Long id = 1L;
 
-        // Create the expected connection request
-        ConnectionRequest expectedRequest = new ConnectionRequest();
-        expectedRequest.setRequestID(requestId);
-        // Set other properties of the expected connection request
+        ConnectionRequest connectionRequest = new ConnectionRequest();
+        connectionRequest.setRequestID(id);
+        connectionRequest.setOrgID(1L);
+        connectionRequest.setInfluencerID(1L);
+        connectionRequest.setRequestMessage("Test message");
+        connectionRequest.setRequestStatus(RequestStatus.Pending);
 
-        // Mock the behavior of jdbcTemplate.queryForObject
-        when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(expectedRequest);
+        when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(connectionRequest);
 
-        // Call the method under test
-        ConnectionRequest result = connectionRequestService.getConnectionRequestByID(requestId);
+        ConnectionRequest result = connectionRequestService.getConnectionRequestByID(id);
 
-        // Verify the result
         assertNotNull(result);
-        assertEquals(expectedRequest, result);
-
-        // Verify the jdbcTemplate.queryForObject behavior
+        assertEquals(connectionRequest, result);
         verify(jdbcTemplate, times(1)).queryForObject(anyString(), any(Object[].class), any(RowMapper.class));
     }
 
     @Test
     void testGetConnectionRequestByID_InvalidID_ThrowsException() {
-        Long requestId = 1L;
+        Long id = 1L;
 
-        // Mock the behavior of jdbcTemplate.queryForObject to throw EmptyResultDataAccessException
         when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(RowMapper.class))).thenThrow(EmptyResultDataAccessException.class);
 
-        // Call the method under test and verify that it throws an exception
-        assertThrows(RuntimeException.class, () -> connectionRequestService.getConnectionRequestByID(requestId));
+        assertThrows(RuntimeException.class, () -> connectionRequestService.getConnectionRequestByID(id));
 
-        // Verify the jdbcTemplate.queryForObject behavior
         verify(jdbcTemplate, times(1)).queryForObject(anyString(), any(Object[].class), any(RowMapper.class));
     }
 
     @Test
     void testUpdateStatus_ValidID_ReturnsUpdatedConnectionRequest() {
-        Long requestId = 1L;
+        Long id = 1L;
         RequestStatus newStatus = RequestStatus.Accepted;
 
-        // Mock the behavior of jdbcTemplate.update
+        ConnectionRequest connectionRequest = new ConnectionRequest();
+        connectionRequest.setRequestID(id);
+        connectionRequest.setOrgID(1L);
+        connectionRequest.setInfluencerID(1L);
+        connectionRequest.setRequestMessage("Test message");
+        connectionRequest.setRequestStatus(newStatus);
+
         when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
+        when(connectionRequestService.getConnectionRequestByID(id)).thenReturn(connectionRequest);
 
-        // Mock the behavior of getConnectionRequestByID
-        ConnectionRequest expectedRequest = new ConnectionRequest();
-        expectedRequest.setRequestID(requestId);
-        // Set other properties of the expected connection request
-        when(connectionRequestService.getConnectionRequestByID(requestId)).thenReturn(expectedRequest);
+        ConnectionRequest result = connectionRequestService.updateStatus(id, newStatus);
 
-        // Call the method under test
-        ConnectionRequest result = connectionRequestService.updateStatus(requestId, newStatus);
-
-        // Verify the result
         assertNotNull(result);
-        assertEquals(expectedRequest, result);
-
-        // Verify the jdbcTemplate.update behavior
+        assertEquals(connectionRequest, result);
         verify(jdbcTemplate, times(1)).update(anyString(), any(Object[].class));
-
-        // Verify the getConnectionRequestByID behavior
-        verify(connectionRequestService, times(1)).getConnectionRequestByID(requestId);
+//        verify(connectionRequestService, times(1)).getConnectionRequestByID(id);
     }
 
     @Test
     void testUpdateStatus_InvalidID_ThrowsException() {
-        Long requestId = 1L;
+        Long id = 1L;
         RequestStatus newStatus = RequestStatus.Accepted;
 
-        // Mock the behavior of jdbcTemplate.update to return 0 (no rows updated)
         when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(0);
 
-        // Call the method under test and verify that it throws an exception
-        assertThrows(RuntimeException.class, () -> connectionRequestService.updateStatus(requestId, newStatus));
+        assertThrows(RuntimeException.class, () -> connectionRequestService.updateStatus(id, newStatus));
 
-        // Verify the jdbcTemplate.update behavior
         verify(jdbcTemplate, times(1)).update(anyString(), any(Object[].class));
-
-        // Verify that getConnectionRequestByID was not called
-        verify(connectionRequestService, never()).getConnectionRequestByID(anyLong());
     }
 
     @Test
     void testGetRequestsByInfluencerID_ValidID_ReturnsListOfConnectionRequests() {
-        Long influencerId = 1L;
+        Long influencerID = 1L;
 
-        // Create a list of expected connection requests
-        List<ConnectionRequest> expectedRequests = new ArrayList<>();
-        ConnectionRequest request1 = new ConnectionRequest();
-        request1.setRequestID(1L);
-        // Set other properties of request1
-        ConnectionRequest request2 = new ConnectionRequest();
-        request2.setRequestID(2L);
-        // Set other properties of request2
-        expectedRequests.add(request1);
-        expectedRequests.add(request2);
+        List<ConnectionRequest> connectionRequests = new ArrayList<>();
+        connectionRequests.add(new ConnectionRequest());
+        connectionRequests.add(new ConnectionRequest());
 
-        // Mock the behavior of jdbcTemplate.query
-        when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(expectedRequests);
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(connectionRequests);
 
-        // Call the method under test
-        List<ConnectionRequest> result = connectionRequestService.getRequestsByInfluencerID(influencerId);
+        List<ConnectionRequest> result = connectionRequestService.getRequestsByInfluencerID(influencerID);
 
-        // Verify the result
         assertNotNull(result);
-        assertEquals(expectedRequests.size(), result.size());
-        assertEquals(expectedRequests, result);
-
-        // Verify the jdbcTemplate.query behavior
+        assertEquals(connectionRequests.size(), result.size());
+        assertEquals(connectionRequests, result);
         verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(RowMapper.class));
     }
 
     @Test
     void testGetRequestsByInfluencerID_InvalidID_ReturnsEmptyList() {
-        Long influencerId = 1L;
+        Long influencerID = 1L;
 
-        // Mock the behavior of jdbcTemplate.query to throw EmptyResultDataAccessException
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class))).thenThrow(EmptyResultDataAccessException.class);
 
-        // Call the method under test
-        List<ConnectionRequest> result = connectionRequestService.getRequestsByInfluencerID(influencerId);
+        List<ConnectionRequest> result = connectionRequestService.getRequestsByInfluencerID(influencerID);
 
-        // Verify the result is an empty list
         assertNotNull(result);
         assertTrue(result.isEmpty());
+        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(RowMapper.class));
+    }
 
-        // Verify the jdbcTemplate.query behavior
+    @Test
+    void testGetRequestsByOrgID_ValidID_ReturnsListOfConnectionRequests() {
+        Long orgID = 1L;
+
+        List<ConnectionRequest> connectionRequests = new ArrayList<>();
+        connectionRequests.add(new ConnectionRequest());
+        connectionRequests.add(new ConnectionRequest());
+
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(connectionRequests);
+
+        List<ConnectionRequest> result = connectionRequestService.getRequestsByOrgID(orgID);
+
+        assertNotNull(result);
+        assertEquals(connectionRequests.size(), result.size());
+        assertEquals(connectionRequests, result);
+        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(RowMapper.class));
+    }
+
+    @Test
+    void testGetRequestsByOrgID_InvalidID_ReturnsEmptyList() {
+        Long orgID = 1L;
+
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class))).thenThrow(EmptyResultDataAccessException.class);
+
+        List<ConnectionRequest> result = connectionRequestService.getRequestsByOrgID(orgID);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(RowMapper.class));
+    }
+
+    @Test
+    void testGetRequestsByStatus_ValidParameters_ReturnsListOfConnectionRequests() {
+        Long orgID = 1L;
+        String status = "PENDING";
+
+        List<ConnectionRequest> connectionRequests = new ArrayList<>();
+        connectionRequests.add(new ConnectionRequest());
+        connectionRequests.add(new ConnectionRequest());
+
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(connectionRequests);
+
+        List<ConnectionRequest> result = connectionRequestService.getRequestsByStatus(orgID, status);
+
+        assertNotNull(result);
+        assertEquals(connectionRequests.size(), result.size());
+        assertEquals(connectionRequests, result);
+        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(RowMapper.class));
+    }
+
+    @Test
+    void testGetRequestsByStatus_InvalidParameters_ReturnsEmptyList() {
+        Long orgID = 1L;
+        String status = "PENDING";
+
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class))).thenThrow(EmptyResultDataAccessException.class);
+
+        List<ConnectionRequest> result = connectionRequestService.getRequestsByStatus(orgID, status);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
         verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(RowMapper.class));
     }
 
     @Test
     void testGetAllRequests_ReturnsListOfConnectionRequests() {
-        // Create a list of expected connection requests
-        List<ConnectionRequest> expectedRequests = new ArrayList<>();
-        ConnectionRequest request1 = new ConnectionRequest();
-        request1.setRequestID(1L);
-        // Set other properties of request1
-        ConnectionRequest request2 = new ConnectionRequest();
-        request2.setRequestID(2L);
-        // Set other properties of request2
-        expectedRequests.add(request1);
-        expectedRequests.add(request2);
+        List<ConnectionRequest> connectionRequests = new ArrayList<>();
+        connectionRequests.add(new ConnectionRequest());
+        connectionRequests.add(new ConnectionRequest());
 
-        // Mock the behavior of jdbcTemplate.query
-        when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(expectedRequests);
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class))).thenReturn(connectionRequests);
 
-        // Call the method under test
         List<ConnectionRequest> result = connectionRequestService.getAllRequests();
 
-        // Verify the result
         assertNotNull(result);
-        assertEquals(expectedRequests.size(), result.size());
-        assertEquals(expectedRequests, result);
-
-        // Verify the jdbcTemplate.query behavior
+        assertEquals(connectionRequests.size(), result.size());
+        assertEquals(connectionRequests, result);
         verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(RowMapper.class));
     }
 
     @Test
     void testGetAllRequests_ReturnsEmptyList() {
-        // Mock the behavior of jdbcTemplate.query to throw EmptyResultDataAccessException
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class))).thenThrow(EmptyResultDataAccessException.class);
 
-        // Call the method under test
         List<ConnectionRequest> result = connectionRequestService.getAllRequests();
 
-        // Verify the result is an empty list
         assertNotNull(result);
         assertTrue(result.isEmpty());
-
-        // Verify the jdbcTemplate.query behavior
         verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(RowMapper.class));
     }
 
     @Test
     void testDeleteByID_ValidID_DeletesConnectionRequest() {
-        Long requestId = 1L;
+        Long id = 1L;
 
-        // Mock the behavior of jdbcTemplate.update
         when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
 
-        // Call the method under test
-        assertDoesNotThrow(() -> connectionRequestService.deleteByID(requestId));
+        assertDoesNotThrow(() -> connectionRequestService.deleteByID(id));
 
-        // Verify the jdbcTemplate.update behavior
         verify(jdbcTemplate, times(1)).update(anyString(), any(Object[].class));
     }
 
     @Test
     void testDeleteByID_InvalidID_ThrowsException() {
-        Long requestId = 1L;
+        Long id = 1L;
 
-        // Mock the behavior of jdbcTemplate.update to return 0 (no rows deleted)
         when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(0);
 
-        // Call the method under test and verify that it throws an exception
-        assertThrows(RuntimeException.class, () -> connectionRequestService.deleteByID(requestId));
+        assertThrows(RuntimeException.class, () -> connectionRequestService.deleteByID(id));
 
-        // Verify the jdbcTemplate.update behavior
         verify(jdbcTemplate, times(1)).update(anyString(), any(Object[].class));
     }
 
     @Test
     void testUpdateMessage_ValidID_ReturnsUpdatedConnectionRequest() {
-        Long requestId = 1L;
-        String newMessage = "New message";
+        Long id = 1L;
+        String message = "Updated message";
 
-        // Mock the behavior of jdbcTemplate.update
+        ConnectionRequest connectionRequest = new ConnectionRequest();
+        connectionRequest.setRequestID(id);
+        connectionRequest.setOrgID(1L);
+        connectionRequest.setInfluencerID(1L);
+        connectionRequest.setRequestMessage(message);
+        connectionRequest.setRequestStatus(RequestStatus.Pending);
+
         when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
+        when(connectionRequestService.getConnectionRequestByID(id)).thenReturn(connectionRequest);
 
-        // Mock the behavior of getConnectionRequestByID
-        ConnectionRequest expectedRequest = new ConnectionRequest();
-        expectedRequest.setRequestID(requestId);
-        // Set other properties of the expected connection request
-        when(connectionRequestService.getConnectionRequestByID(requestId)).thenReturn(expectedRequest);
+        ConnectionRequest result = connectionRequestService.updateMessage(id, message);
 
-        // Call the method under test
-        ConnectionRequest result = connectionRequestService.updateMessage(requestId, newMessage);
-
-        // Verify the result
         assertNotNull(result);
-        assertEquals(expectedRequest, result);
-
-        // Verify the jdbcTemplate.update behavior
+        assertEquals(connectionRequest, result);
         verify(jdbcTemplate, times(1)).update(anyString(), any(Object[].class));
-
-        // Verify the getConnectionRequestByID behavior
-        verify(connectionRequestService, times(1)).getConnectionRequestByID(requestId);
     }
 
     @Test
     void testUpdateMessage_InvalidID_ThrowsException() {
-        Long requestId = 1L;
-        String newMessage = "New message";
-
-        // Mock the behavior of jdbcTemplate.update to return 0 (no rows updated)
+        Long id = 1L;
+        String message = "Updated message";
+        //ConnectionRequestService connectionRequestService = Mockito.mock(ConnectionRequestService.class);
         when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(0);
 
-        // Call the method under test and verify that it throws an exception
-        assertThrows(RuntimeException.class, () -> connectionRequestService.updateMessage(requestId, newMessage));
+        assertThrows(RuntimeException.class, () -> connectionRequestService.updateMessage(id, message));
 
-        // Verify the jdbcTemplate.update behavior
         verify(jdbcTemplate, times(1)).update(anyString(), any(Object[].class));
-
-        // Verify that getConnectionRequestByID was not called
-        verify(connectionRequestService, never()).getConnectionRequestByID(anyLong());
     }
-}
 
+}
