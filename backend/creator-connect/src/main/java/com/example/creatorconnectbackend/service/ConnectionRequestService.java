@@ -84,6 +84,24 @@ public class ConnectionRequestService implements ConnectionRequestServiceInterfa
         }
     }
 
+    public List<ConnectionRequest> getRequestsByOrgID(Long orgID) {
+        String query = "SELECT * FROM connection_requests WHERE OrgID = ?";
+        try {
+            return jdbcTemplate.query(query, new Object[]{orgID}, rowMapper);
+        } catch (EmptyResultDataAccessException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    public List<ConnectionRequest> getRequestsByStatus(Long orgID, String status) {
+        String query = "SELECT * FROM connection_requests WHERE OrgID = ? AND RequestStatus = ?";
+        try {
+            return jdbcTemplate.query(query, new Object[]{orgID, status}, rowMapper);
+        } catch (EmptyResultDataAccessException e) {
+            return new ArrayList<>();
+        }
+    }
+
 
     public List<ConnectionRequest> getAllRequests() {
         String query = "SELECT * FROM connection_requests";
