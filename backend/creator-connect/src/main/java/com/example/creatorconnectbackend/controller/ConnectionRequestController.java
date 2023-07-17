@@ -82,8 +82,8 @@ public class ConnectionRequestController {
     }
 
     @PutMapping("/updateMessage/{id}")
-    public ResponseEntity<ConnectionRequest> updateRequestMessage(@PathVariable("id") Long requestId, @RequestBody String message) {
-        ConnectionRequest updatedRequest = connectionRequestService.updateMessage(requestId, message);
+    public ResponseEntity<ConnectionRequest> updateRequestMessage(@PathVariable("id") Long requestId, @RequestBody Map<String, String> map) {
+        ConnectionRequest updatedRequest = connectionRequestService.updateMessage(requestId, map);
         return ResponseEntity.ok(updatedRequest);
     }
 

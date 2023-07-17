@@ -17,7 +17,9 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -68,7 +70,7 @@ class ConnectionRequestServiceTests {
         when(connectionRequest.getOrgID()).thenReturn(1L);
         when(connectionRequest.getInfluencerID()).thenReturn(2L);
         when(connectionRequest.getRequestMessage()).thenReturn("Test message");
-        when(connectionRequest.getRequestStatus()).thenReturn(RequestStatus.Pending);
+        when(connectionRequest.getRequestStatus()).thenReturn(RequestStatus.valueOf(String.valueOf(RequestStatus.Pending)));
 
         // Invoke the createRequest method
         Mockito.doReturn(connectionRequest).when(connectionRequestService).createRequest(Mockito.any(ConnectionRequest.class));
@@ -315,19 +317,20 @@ class ConnectionRequestServiceTests {
     @Test
     void testUpdateMessage_ValidID_ReturnsUpdatedConnectionRequest() {
         Long id = 1L;
-        String message = "Updated message";
+        Map<String, String> map = new HashMap<>();
+        map.put("Message", "Hello!");
 
         ConnectionRequest connectionRequest = new ConnectionRequest();
         connectionRequest.setRequestID(id);
         connectionRequest.setOrgID(1L);
         connectionRequest.setInfluencerID(1L);
-        connectionRequest.setRequestMessage(message);
+        connectionRequest.setRequestMessage(map.get("Message"));
         connectionRequest.setRequestStatus(RequestStatus.Pending);
 
         when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
         when(connectionRequestService.getConnectionRequestByID(id)).thenReturn(connectionRequest);
 
-        ConnectionRequest result = connectionRequestService.updateMessage(id, message);
+        ConnectionRequest result = connectionRequestService.updateMessage(id, map);
 
         assertNotNull(result);
         assertEquals(connectionRequest, result);
@@ -337,11 +340,12 @@ class ConnectionRequestServiceTests {
     @Test
     void testUpdateMessage_InvalidID_ThrowsException() {
         Long id = 1L;
-        String message = "Updated message";
+        Map<String, String> map = new HashMap<>();
+        map.put("Message", "Hello!");
         //ConnectionRequestService connectionRequestService = Mockito.mock(ConnectionRequestService.class);
         when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(0);
 
-        assertThrows(RuntimeException.class, () -> connectionRequestService.updateMessage(id, message));
+        assertThrows(RuntimeException.class, () -> connectionRequestService.updateMessage(id, map));
 
         verify(jdbcTemplate, times(1)).update(anyString(), any(Object[].class));
     }

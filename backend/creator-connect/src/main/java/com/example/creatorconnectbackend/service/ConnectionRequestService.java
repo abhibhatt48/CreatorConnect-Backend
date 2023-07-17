@@ -124,8 +124,9 @@ public class ConnectionRequestService implements ConnectionRequestServiceInterfa
     }
 
 
-    public ConnectionRequest updateMessage(Long id, String message) {
+    public ConnectionRequest updateMessage(Long id, Map<String, String> map) {
         String query = "UPDATE connection_requests SET RequestMessage = ? WHERE RequestID = ?";
+        String message = map.get("Message");
         int updatedRows = jdbcTemplate.update(query, message, id);
         if (updatedRows == 0) {
             throw new RuntimeException("Failed to update message for connection request with ID: " + id);

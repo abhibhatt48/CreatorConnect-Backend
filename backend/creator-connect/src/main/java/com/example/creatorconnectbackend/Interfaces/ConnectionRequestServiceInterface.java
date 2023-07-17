@@ -4,6 +4,7 @@ import com.example.creatorconnectbackend.model.ConnectionRequest;
 import com.example.creatorconnectbackend.model.RequestStatus;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ConnectionRequestServiceInterface {
 
@@ -13,5 +14,5 @@ public interface ConnectionRequestServiceInterface {
     List<ConnectionRequest> getRequestsByInfluencerID(Long id);
     List<ConnectionRequest> getAllRequests();
     void deleteByID(Long id);
-    ConnectionRequest updateMessage(Long id, String message);
+    ConnectionRequest updateMessage(Long id, Map<String, String> message);
 }

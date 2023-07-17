@@ -200,13 +200,15 @@ class ConnectionRequestControllerTests {
         ConnectionRequest updatedRequest = mock(ConnectionRequest.class);
 
         // Configure the mock service to return the updated request
-        when(connectionRequestService.updateMessage(1L, "New message")).thenReturn(updatedRequest);
+        Map<String, String> map = new HashMap<>();
+        map.put("Message", "Hello!");
+        when(connectionRequestService.updateMessage(1L, map)).thenReturn(updatedRequest);
 
         // Invoke the updateRequestMessage method
-        ResponseEntity<ConnectionRequest> response = connectionRequestController.updateRequestMessage(1L, "New message");
+        ResponseEntity<ConnectionRequest> response = connectionRequestController.updateRequestMessage(1L, map);
 
         // Verify that the service method was called
-        verify(connectionRequestService).updateMessage(1L, "New message");
+        verify(connectionRequestService).updateMessage(1L, map);
 
         // Verify the response status code and body
         assertEquals(HttpStatus.OK, response.getStatusCode());
