@@ -1,6 +1,4 @@
-package com.example.creatorconnectbackend.model;
-
-import java.time.LocalDateTime;
+package com.example.creatorconnectbackend.models;
 
 import javax.validation.constraints.Size;
 
@@ -8,7 +6,7 @@ import org.hibernate.validator.constraints.Email;
 
 public class User {
 
-	private Long userID;
+	private Long userID;	
 	@Email(message = "Email should be valid")
     private String email;
 	@Size(min = 8, message = "Password should have at least 8 characters")

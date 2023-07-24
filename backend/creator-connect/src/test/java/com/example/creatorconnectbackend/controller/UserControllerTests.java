@@ -1,8 +1,6 @@
-package com.example.creatorconnectbackend.controller;
+package com.example.creatorconnectbackend.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -10,24 +8,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import com.example.creatorconnectbackend.model.EmailBody;
-import com.example.creatorconnectbackend.model.User;
-import com.example.creatorconnectbackend.service.UserService;
-
+import com.example.creatorconnectbackend.models.EmailBody;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 
-public class UserControllerTests {
+import com.example.creatorconnectbackend.models.User;
+import com.example.creatorconnectbackend.services.UserService;
 
-    private UserController userController;
+public class UserControllerTest {
+
+	private UserController userController;
 
     @Mock
     private UserService userService;
@@ -45,7 +43,7 @@ public class UserControllerTests {
     public void testRegisterUserValid() {
         User user = new User();
         when(bindingResult.hasErrors()).thenReturn(false);
-        when(userService.register(user)).thenReturn(user);
+        when(userService.userRegister(user)).thenReturn(user);
 
         ResponseEntity<String> response = userController.registerUser(user, bindingResult);
 
@@ -71,13 +69,14 @@ public class UserControllerTests {
     @Test
     public void testLoginUserValid() {
         User user = new User();
+        user.setUserID(1L);
         when(bindingResult.hasErrors()).thenReturn(false);
-        when(userService.login(user)).thenReturn(true);
+        when(userService.userLogin(user)).thenReturn(user.getUserID());
 
-        ResponseEntity<String> response = userController.loginUser(user, bindingResult);
+        ResponseEntity<?> response = userController.loginUser(user, bindingResult);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Logged in successfully", response.getBody());
+        assertEquals(user.getUserID(), response.getBody());
     }
 
     @Test
@@ -89,10 +88,28 @@ public class UserControllerTests {
         when(bindingResult.hasErrors()).thenReturn(true);
         when(bindingResult.getAllErrors()).thenReturn(errors);
 
-        ResponseEntity<String> response = userController.loginUser(user, bindingResult);
+        ResponseEntity<?> response = userController.loginUser(user, bindingResult);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Email is required, Password is required", response.getBody());
+        String errorMsg = errors.stream()
+                    .map(ObjectError::getDefaultMessage)
+                    .collect(Collectors.joining(", "));
+        assertEquals(errorMsg, response.getBody());
+    }
+
+    @Test
+    public void testLoginUserNotFound() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword("password");
+
+        when(bindingResult.hasErrors()).thenReturn(false);
+        when(userService.userLogin(user)).thenReturn(-1L);
+
+        ResponseEntity<?> response = userController.loginUser(user, bindingResult);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("Invalid email or password", response.getBody());
     }
     
     @Test
@@ -107,7 +124,7 @@ public class UserControllerTests {
 
         verify(userService).forgotPassword(emailBody.getEmail());
     }
-    
+
     @Test
     public void testResetPassword() {
         String token = "testToken";

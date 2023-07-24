@@ -1,4 +1,4 @@
-package com.example.creatorconnectbackend.controller;
+package com.example.creatorconnectbackend.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -14,10 +14,10 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.example.creatorconnectbackend.model.Organization;
-import com.example.creatorconnectbackend.service.OrganizationService;
+import com.example.creatorconnectbackend.models.Organization;
+import com.example.creatorconnectbackend.services.OrganizationService;
 
-public class OrganizationControllerTests {
+public class OrganizationControllerTest {
     private OrganizationController organizationController;
 
     @Mock

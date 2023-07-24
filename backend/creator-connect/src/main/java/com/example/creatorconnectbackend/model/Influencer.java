@@ -1,7 +1,7 @@
-package com.example.creatorconnectbackend.model;
+package com.example.creatorconnectbackend.models;
 
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import java.time.LocalDate;
+import java.util.List;
 
 public class Influencer {
 	private Long influencerID;
@@ -10,11 +10,19 @@ public class Influencer {
     private Gender gender;
     private String influencerName;
     private String influencerType;
-    private String interestedIn;
+    private List<String> influencerNiche;
     private Long minRate;
     private String previousBrands;
     private String location;
-    private String bestPosts;
+    private String bio;
+    private LocalDate birthdate;
+    private String instagram;
+    private String tikTok;
+    private String tweeter;
+    private String youtube;
+    private String facebook;
+    private String twitch;
+    private List<String> bestPosts;
  
     private User user;
     
@@ -54,12 +62,6 @@ public class Influencer {
 	public void setInfluencerType(String influencerType) {
 		this.influencerType = influencerType;
 	}
-	public String getInterestedIn() {
-		return interestedIn;
-	}
-	public void setInterestedIn(String interestedIn) {
-		this.interestedIn = interestedIn;
-	}
 	public Long getMinRate() {
 		return minRate;
 	}
@@ -78,16 +80,70 @@ public class Influencer {
 	public void setLocation(String location) {
 		this.location = location;
 	}
-	public String getBestPosts() {
-		return bestPosts;
-	}
-	public void setBestPosts(String bestPosts) {
-		this.bestPosts = bestPosts;
-	}
 	public User getUser() {
 		return user;
 	}
 	public void setUser(User user) {
 		this.user = user;
+	}
+	public List<String> getInfluencerNiche() {
+		return influencerNiche;
+	}
+	public void setInfluencerNiche(List<String> influencerNiche) {
+		this.influencerNiche = influencerNiche;
+	}
+	public String getBio() {
+		return bio;
+	}
+	public void setBio(String bio) {
+		this.bio = bio;
+	}
+	public LocalDate getBirthdate() {
+		return birthdate;
+	}
+	public void setBirthdate(LocalDate birthdate) {
+		this.birthdate = birthdate;
+	}
+	public String getInstagram() {
+		return instagram;
+	}
+	public void setInstagram(String instagram) {
+		this.instagram = instagram;
+	}
+	public String getTikTok() {
+		return tikTok;
+	}
+	public void setTikTok(String tikTok) {
+		this.tikTok = tikTok;
+	}
+	public String getTweeter() {
+		return tweeter;
+	}
+	public void setTweeter(String tweeter) {
+		this.tweeter = tweeter;
+	}
+	public String getYoutube() {
+		return youtube;
+	}
+	public void setYoutube(String youtube) {
+		this.youtube = youtube;
+	}
+	public String getFacebook() {
+		return facebook;
+	}
+	public void setFacebook(String facebook) {
+		this.facebook = facebook;
+	}
+	public String getTwitch() {
+		return twitch;
+	}
+	public void setTwitch(String twitch) {
+		this.twitch = twitch;
+	}
+	public List<String> getBestPosts() {
+		return bestPosts;
+	}
+	public void setBestPosts(List<String> bestPosts) {
+		this.bestPosts = bestPosts;
 	}
 }

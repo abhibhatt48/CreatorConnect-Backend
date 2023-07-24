@@ -1,10 +1,10 @@
-package com.example.creatorconnectbackend.Interfaces;
+package com.example.creatorconnectbackend.interfaces;
 
-import com.example.creatorconnectbackend.model.User;
+import com.example.creatorconnectbackend.models.User;
 
 public interface UserServiceInterface {
-	User register(User user);
-    boolean login(User user);
+	User userRegister(User user);
+    long userLogin(User user);
     void forgotPassword(String email);
     void resetPassword(String token, String newPassword);
 }

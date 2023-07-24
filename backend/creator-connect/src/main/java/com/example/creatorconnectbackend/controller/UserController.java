@@ -1,11 +1,14 @@
-package com.example.creatorconnectbackend.controller;
+package com.example.creatorconnectbackend.controllers;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.creatorconnectbackend.models.EmailBody;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -15,15 +18,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.creatorconnectbackend.model.EmailBody;
-import com.example.creatorconnectbackend.model.User;
-import com.example.creatorconnectbackend.service.UserService;
+import com.example.creatorconnectbackend.models.User;
+import com.example.creatorconnectbackend.services.UserService;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 	
 	private final UserService userService;
+	private final Logger logger = LoggerFactory.getLogger(UserController.class);
 
 	public UserController(UserService userService) {
         this.userService = userService;
@@ -32,6 +35,7 @@ public class UserController {
 
 	@PostMapping("/register")
 	public ResponseEntity<String> registerUser(@Valid @RequestBody User user, BindingResult bindingResult) {
+		logger.info("Attempt to register new user.");
 	    if(bindingResult.hasErrors()){
 	        // convert the list of ObjectError objects into a single string
 	        String errorMsg = bindingResult.getAllErrors().stream()
@@ -42,12 +46,14 @@ public class UserController {
 	    }
 	    user.setUser_type(user.getUser_type());
 	    
-	    User registeredUser = userService.register(user);
+	    User registeredUser = userService.userRegister(user);
+	    logger.info("User registered successfully with ID: {}", registeredUser.getUserID());
 	    return ResponseEntity.ok("Registered successfully");
 	}
 	
 	@PostMapping("/login")
-	public ResponseEntity<String> loginUser(@Valid @RequestBody User user, BindingResult bindingResult) {
+	public ResponseEntity<?> loginUser(@Valid @RequestBody User user, BindingResult bindingResult) {
+		logger.info("Attempt to login user.");
 	    if(bindingResult.hasErrors()){
 	        // convert the list of ObjectError objects into a single string
 	        String errorMsg = bindingResult.getAllErrors().stream()
@@ -56,22 +62,29 @@ public class UserController {
 
 	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
 	    }
-	    boolean loggedIn = userService.login(user);
-	    return loggedIn ? ResponseEntity.ok("Logged in successfully") : ResponseEntity.badRequest().build();
+	    long userId = userService.userLogin(user);
+	    if (userId == -1) {
+	        logger.info("User login failed");
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+	    } else {
+	        logger.info("User login successful");
+	        return ResponseEntity.ok(userId);
+	    }
 	}
-	
+
 	@PostMapping("/forgot-password")
 	public ResponseEntity<String> forgotPassword(@RequestBody EmailBody emailBody) {
-	    userService.forgotPassword(emailBody.getEmail());
-	    return ResponseEntity.ok("Email with reset password link has been sent");
+		logger.info("Processing forgot password request for email: {}", emailBody.getEmail());
+		userService.forgotPassword(emailBody.getEmail());
+		return ResponseEntity.ok("Email with reset password link has been sent");
 	}
-	
+
 	@PostMapping("/reset-password")
 	public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> request) {
-	    String token = request.get("token");
-	    String newPassword = request.get("password");
-	    userService.resetPassword(token, newPassword);
-	    return ResponseEntity.ok("Password has been reset");
+		String token = request.get("token");
+		logger.info("Processing password reset request for token: {}", token);
+		String newPassword = request.get("password");
+		userService.resetPassword(token, newPassword);
+		return ResponseEntity.ok("Password has been reset");
 	}
 }
-
